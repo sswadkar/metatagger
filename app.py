@@ -1,7 +1,28 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ExifTags
 from PIL.ExifTags import TAGS
 import streamlit as st
 from io import BytesIO
+
+def orient_image(image):
+    try:
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        exif = image._getexif()
+        if exif is not None:
+            exif = dict(exif.items())
+            orientation_value = exif.get(orientation, None)
+
+            if orientation_value == 3:
+                image = image.rotate(180, expand=True)
+            elif orientation_value == 6:
+                image = image.rotate(270, expand=True)
+            elif orientation_value == 8:
+                image = image.rotate(90, expand=True)
+    except Exception as e:
+        print(f"Error in correcting orientation: {e}")
+    
+    return image
 
 def overlay_text_on_image(input_image, align):
     # Load the image
@@ -34,13 +55,19 @@ def overlay_text_on_image(input_image, align):
     focal_length = float(round(focal_length, 2)) if focal_length else 'Unknown focal length'
     f_number = float(round(f_number, 2)) if f_number else 'Unknown f-number'
 
+    # Exposure display -- 1 over D/N will get simplified fraction
+    exposure_display = f"1 / {int(exposure_time.denominator / exposure_time.numerator)}" if exposure_time else "Unknown exposure time"
+
     # Prepare text to overlay
     top_text = f"{model}"
-    bottom_text = f"ISO {iso} | {focal_length} mm | f/{f_number} | {exposure_time} s"
+    bottom_text = f"ISO {iso} | {focal_length} mm | f/{f_number} | {exposure_display} s"
 
     # Load fonts
     font_bold = ImageFont.truetype("roboto/Roboto-Bold.ttf", 59)
     font_normal = ImageFont.truetype("roboto/Roboto-Regular.ttf", 49)
+
+    # Correct orientation based on EXIF tags
+    image = orient_image(image)
 
     # Create a drawing context
     draw = ImageDraw.Draw(image)
@@ -96,7 +123,6 @@ if uploaded_files:
         image = Image.open(file)
 
         if generate_button:
-
             processed_image= overlay_text_on_image(image, align)
             # Save image into Byte Array
             img_byte_arr = BytesIO()
@@ -117,4 +143,6 @@ if uploaded_files:
                 file_name=f"processed_{file.name}"
             )
         else:
-            image_container.image(image, caption=f'Original Image: {file.name}', use_column_width=True)
+            # Orient image before displaying
+            oriented_image = orient_image(image)
+            image_container.image(oriented_image, caption=f'Original Image: {file.name}', use_column_width=True)
