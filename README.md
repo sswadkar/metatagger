@@ -15,7 +15,7 @@ MetaTagger is a tool designed to enhance and tag your images using metadata. Thi
 
 Here’s an example of an enhanced image with metadata overlay:
 
-![Enhanced Image](exampled_tagged_image.JPG)
+![Enhanced Image](example_tagged_image.jpeg)
 
 ### Getting Started
 
