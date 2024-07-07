@@ -25,6 +25,15 @@ def overlay_text_on_image(input_image, align):
     f_number = metadata.get('FNumber', 'Unknown f-number')
     exposure_time = metadata.get('ExposureTime', 'Unknown exposure time')
 
+    # Round focal length and f-number to 2 decimal points if they exist
+    if isinstance(focal_length, tuple):
+        focal_length = focal_length[0] / focal_length[1]
+    if isinstance(f_number, tuple):
+        f_number = f_number[0] / f_number[1]
+
+    focal_length = float(round(focal_length, 2)) if focal_length else 'Unknown focal length'
+    f_number = float(round(f_number, 2)) if f_number else 'Unknown f-number'
+
     # Prepare text to overlay
     top_text = f"{model}"
     bottom_text = f"ISO {iso} | {focal_length} mm | f/{f_number} | {exposure_time} s"
