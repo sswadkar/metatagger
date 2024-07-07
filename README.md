@@ -1,6 +1,6 @@
-## ![MetaTagger](https://metatagger.streamlit.app/)
+## [MetaTagger](https://metatagger.streamlit.app/)
 
-MetaTagger is a tool designed to enhance and tag your images using metadata. This project leverages the detailed information embedded within your images to apply custom overlays, tags, and enhancements seamlessly. The streamlit app can be found ![here](https://metatagger.streamlit.app/)
+MetaTagger is a tool designed to enhance and tag your images using metadata. This project leverages the detailed information embedded within your images to apply custom overlays, tags, and enhancements seamlessly. The streamlit app can be found [here](https://metatagger.streamlit.app/)
 
 ### Features
 
