@@ -101,7 +101,7 @@ if 'aligns' not in st.session_state:
 if 'processed_images' not in st.session_state:
     st.session_state['processed_images'] = {}
 
-uploaded_files = st.file_uploader("Choose images...", type=["png", "jpg", "jpeg", "tiff", "bmp", "gif"], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Choose images...", type=["png", "jpg", "jpeg", "heic", "bmp"], accept_multiple_files=True)
 
 if uploaded_files:
     for i, file in enumerate(uploaded_files):
