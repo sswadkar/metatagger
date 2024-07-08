@@ -8,6 +8,7 @@ from helpermethods.extract_gps_data import get_lat_lon
 from helpermethods.coords_to_location import get_location_data
 from helperobjects.EXIFObj import EXIFObj
 from helperobjects.TaggerOptions import TaggerOptions
+import numpy as np
 
 def orient_image(image):
     try:
@@ -29,6 +30,13 @@ def orient_image(image):
         print(f"Error in correcting orientation: {e}")
     
     return image
+
+def im_has_alpha(img_arr):
+    '''
+    returns True for Image with alpha channel
+    '''
+    h,w,c = img_arr.shape
+    return True if c ==4 else False
 
 def extract_gps_info(image):
     exif_data = get_exif_data(image)
@@ -57,8 +65,8 @@ def get_exif(image):
             metadata[decoded] = value
 
     # Get camera make and model from metadata
-    exifobj.make = metadata.get("Make", "Unknown make")
-    exifobj.model = metadata.get("Model", "Unknown model")
+    exifobj.make = metadata.get("Make", None)
+    exifobj.model = metadata.get("Model", None)
     
 
     # Get location metadata
@@ -69,13 +77,14 @@ def get_exif(image):
         exifobj.city, exifobj.state, exifobj.country = get_location_data(lat, long)
 
     # Get ISO, focal length, f-number, and exposure time from metadata
-    exifobj.iso = metadata.get('ISOSpeedRatings', 'Unknown ISO')
-    focal_length = metadata.get('FocalLength', 'Unknown focal length')
-    f_number = metadata.get('FNumber', 'Unknown f-number')
-    exposure_time = metadata.get('ExposureTime', 'Unknown exposure time')
+    exifobj.iso = metadata.get('ISOSpeedRatings', None)
+    focal_length = metadata.get('FocalLength', None)
+    f_number = metadata.get('FNumber', None)
+    exposure_time = metadata.get('ExposureTime', None)
     
     # Exposure display -- 1 over D/N will get simplified fraction
-    exifobj.exposure_display = f"1 / {int(exposure_time.denominator / exposure_time.numerator)}" if exposure_time else "Unknown exposure time"
+    if (exposure_time):
+        exifobj.exposure_display = f"1 / {int(exposure_time.denominator / exposure_time.numerator)}" if exposure_time else "Unknown exposure time"
 
     # Round focal length and f-number to 2 decimal points if they exist
     if isinstance(focal_length, tuple):
@@ -83,8 +92,8 @@ def get_exif(image):
     if isinstance(f_number, tuple):
         f_number = f_number[0] / f_number[1]
 
-    exifobj.focal_length = float(round(focal_length, 2)) if focal_length else 'Unknown focal length'
-    exifobj.f_number = float(round(f_number, 2)) if f_number else 'Unknown f-number'
+    exifobj.focal_length = float(round(focal_length, 2)) if focal_length else None
+    exifobj.f_number = float(round(f_number, 2)) if f_number else None
 
     return exifobj
 
@@ -195,7 +204,7 @@ if uploaded_files:
                 include_location = st.checkbox("Include location", value=not(disable_loc), key=f'include_location_{file.name}', disabled=disable_loc)
             with col6:
                 disable_cam_settings = not(exif_img_data.iso) and not(exif_img_data.focal_length) and not(exif_img_data.f_number)
-                include_cam_settings = st.checkbox("Include camera settings", value=not(disable_cam_settings), key=f'include_cam_settings_{file.name}')
+                include_cam_settings = st.checkbox("Include camera settings", value=not(disable_cam_settings), key=f'include_cam_settings_{file.name}', disabled=disable_cam_settings)
 
             generate_button = st.form_submit_button(label=f"Generate {file.name}")
 
@@ -214,7 +223,11 @@ if uploaded_files:
             processed_image= overlay_text_on_image(image, exif_img_data, options)
             # Save image into Byte Array
             img_byte_arr = BytesIO()
-            processed_image.save(img_byte_arr, format='JPEG', compress_level=1, quality=95)
+            has_transparency = im_has_alpha(np.array(processed_image))
+            if (has_transparency):
+                processed_image.save(img_byte_arr, format='PNG')
+            else:
+                processed_image.save(img_byte_arr, format='JPEG', compress_level=1, quality=95)
             img_byte_arr = img_byte_arr.getvalue()
 
 
