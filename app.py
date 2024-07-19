@@ -102,7 +102,11 @@ def overlay_text_on_image(input_image, exif_data: EXIFObj, options: TaggerOption
     image = input_image
 
     # Prepare text to overlay
-    top_text = f"{exif_data.model}"
+    top_text = ""
+    if options.include_make:
+        top_text += exif_data.make + " "
+    if options.include_model:
+        top_text += exif_data.model
     middle_text = f"{exif_data.city}, {exif_data.state}, {exif_data.country}" if exif_data.lat and exif_data.long else ""
     bottom_text = f"ISO {exif_data.iso} | {exif_data.focal_length} mm | f/{exif_data.f_number} | {exif_data.exposure_display} s"
 
@@ -146,7 +150,7 @@ def overlay_text_on_image(input_image, exif_data: EXIFObj, options: TaggerOption
         bottom_text_position = (image_width - bottom_text_width - 80, image_height - 80 * bottom_mult)
 
     # Add text to image
-    if options.include_model:
+    if options.include_make or options.include_model:
         draw.text(top_text_position, top_text, font=font_bold_59, fill="white")
     
     # Only add middle text if it exists
@@ -183,6 +187,7 @@ if uploaded_files:
 
         with st.form(key=f'form_{file.name}'):
             st.write(f"**EXIF Data for {file.name}:**")
+            st.write(f"**Make:** {exif_img_data.make}")
             st.write(f"**Model:** {exif_img_data.model}")
             
             loc_not_found = not(exif_img_data.city) and not(exif_img_data.state) and not(exif_img_data.country)
@@ -195,14 +200,17 @@ if uploaded_files:
 
             align = st.selectbox(f"Choose text alignment for {file.name}", ['left', 'right'], key=f'align_{file.name}', index=['left', 'right'].index(st.session_state['aligns'][file.name]))
 
-            col4, col5, col6 = st.columns(3)
+            col4, col5, col6, col7 = st.columns(4)
             with col4:
+                disable_make = exif_img_data.make == None
+                include_make = st.checkbox("Include make", value=False, key=f'include_make_{file.name}', disabled=disable_make)
+            with col5:
                 disable_model = exif_img_data.model == None
                 include_model = st.checkbox("Include model", value= not(disable_model), key=f'include_model_{file.name}', disabled=disable_model)
-            with col5:
+            with col6:
                 disable_loc = not(exif_img_data.city) and not(exif_img_data.state) and not(exif_img_data.country)
                 include_location = st.checkbox("Include location", value=not(disable_loc), key=f'include_location_{file.name}', disabled=disable_loc)
-            with col6:
+            with col7:
                 disable_cam_settings = not(exif_img_data.iso) and not(exif_img_data.focal_length) and not(exif_img_data.f_number)
                 include_cam_settings = st.checkbox("Include camera settings", value=not(disable_cam_settings), key=f'include_cam_settings_{file.name}', disabled=disable_cam_settings)
 
@@ -210,6 +218,7 @@ if uploaded_files:
 
         options = TaggerOptions()
         options.align = align
+        options.include_make = include_make
         options.include_model = include_model
         options.include_location = include_location
         options.include_cam_settings = include_cam_settings

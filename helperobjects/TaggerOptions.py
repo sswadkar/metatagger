@@ -4,5 +4,6 @@ from dataclasses import dataclass
 class TaggerOptions():
     align = None
     include_model = False
+    include_make = False
     include_location = False
     include_cam_settings = False
